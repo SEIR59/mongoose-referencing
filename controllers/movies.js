@@ -1,4 +1,5 @@
 const Movie = require('../models/movie');
+const Performer = require('../models/performer');
 
 module.exports = {
   index,
@@ -13,10 +14,34 @@ function index(req, res) {
   });
 }
 
+// function show(req, res) {
+//   Movie.findById(req.params.id, function(err, movie) {
+//     res.render('movies/show', { title: 'Movie Detail', movie });
+//   });
+// }
+
+// function show(req, res) {
+//   Movie.findById(req.params.id)
+//     .populate('cast').exec(function(err, movie) {
+//       res.render('movies/show', { title: 'Movie Detail', movie });
+//     });
+// }
+
 function show(req, res) {
-  Movie.findById(req.params.id, function(err, movie) {
-    res.render('movies/show', { title: 'Movie Detail', movie });
-  });
+  Movie.findById(req.params.id)
+    .populate('cast').exec(function(err, movie) {
+      // Performer.find({}).where('_id').nin(movie.cast) <-- Mongoose query builder
+      // Native MongoDB approach 
+      Performer.find(
+        {_id: {$nin: movie.cast}},
+        function(err, performers) {
+          console.log(performers);
+          res.render('movies/show', {
+            title: 'Movie Detail', movie, performers
+          });
+        }
+      );
+    });
 }
 
 function newMovie(req, res) {
@@ -33,6 +58,6 @@ function create(req, res) {
   movie.save(function(err) {
     if (err) return res.redirect('/movies/new');
     console.log(movie);
-    res.redirect('/movies');
+    res.redirect(`/movies/${movie._id}`);
   });
 }
